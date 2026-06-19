@@ -1,0 +1,226 @@
+import { NextResponse } from 'next/server';
+import { exec } from 'child_process';
+import util from 'util';
+
+const execPromise = util.promisify(exec);
+
+export async function POST(request) {
+  try {
+    const { url } = await request.json();
+    if (!url) {
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    }
+
+    console.log(`Processing download request for URL: ${url}`);
+
+    try {
+      // 1. TikTok specific handler via TikWM API (bypasses Akamai blocks natively)
+      if (url.includes('tiktok.com')) {
+        let tikwmData = null;
+
+        try {
+          // Primary API
+          const tikwmRes = await fetch(`https://tikwm.com/api/?url=${encodeURIComponent(url)}`);
+          tikwmData = await tikwmRes.json();
+        } catch (e) {
+          console.warn('TikWM API failed, falling back to RapidAPI...');
+        }
+
+        if (!tikwmData || tikwmData.code !== 0 || !tikwmData.data) {
+          try {
+            // Backup API: tiktok-video-no-watermark2.p.rapidapi.com
+            const rapidApiRes = await fetch(`https://tiktok-video-no-watermark2.p.rapidapi.com/?url=${encodeURIComponent(url)}`, {
+              headers: {
+                'x-rapidapi-key': '64a87d8a5bmsh00d6c0690992bb8p134491jsnc2521fa8bbe6',
+                'x-rapidapi-host': 'tiktok-video-no-watermark2.p.rapidapi.com'
+              }
+            });
+            tikwmData = await rapidApiRes.json();
+          } catch (e) {
+            console.error('RapidAPI backup also failed:', e);
+          }
+        }
+        
+        if (tikwmData && tikwmData.code === 0 && tikwmData.data) {
+          const d = tikwmData.data;
+          const formats = [];
+          
+          if (d.play) {
+            formats.push({
+              format: 'Video No Watermark',
+              quality: 'HD',
+              ext: 'mp4',
+              url: d.play,
+              size: d.size || null,
+              original_url: url
+            });
+          }
+          if (d.music) {
+            formats.push({
+              format: 'Audio',
+              quality: 'MP3',
+              ext: 'mp3',
+              url: d.music,
+              size: null,
+              original_url: url
+            });
+          }
+          
+          return NextResponse.json({
+            title: d.title || 'TikTok Video',
+            thumbnail: d.cover || d.origin_cover || '',
+            duration: d.duration ? `${Math.floor(d.duration / 60)}:${(d.duration % 60).toString().padStart(2, '0')}` : '',
+            formats: formats
+          });
+        }
+      }
+
+      // 2. Try extracting info using yt-dlp for other platforms
+      // Escaping URL for shell execution
+      const escapedUrl = url.replace(/(["'$`])/g, '\\$1');
+      const { stdout } = await execPromise(`python -m yt_dlp -j --no-playlist "${escapedUrl}"`);
+      const info = JSON.parse(stdout);
+
+      const formatDuration = (secs) => {
+        if (!secs) return '';
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const s = secs % 60;
+        return h > 0 
+          ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+          : `${m}:${s.toString().padStart(2, '0')}`;
+      };
+
+      let formats = [];
+
+      // Clean up formats based on platform
+      if (url.includes('facebook.com') || url.includes('fb.watch') || url.includes('fb.video')) {
+        // Facebook splits high-res video and audio. 
+        // Only the 'sd' and 'hd' format_ids are pre-merged with both video and audio.
+        formats = info.formats
+          .filter(f => f.url && (f.protocol === 'https' || f.protocol === 'http'))
+          .filter(f => f.format_id === 'sd' || f.format_id === 'hd')
+          .map(f => ({
+            format: f.format_id === 'hd' ? 'High Definition (HD)' : 'Standard Definition (SD)',
+            format_id: f.format_id || '',
+            quality: f.format_id === 'hd' ? 'HD' : 'SD',
+            ext: 'mp4',
+            url: f.url,
+            size: f.filesize || f.filesize_approx || null,
+            http_headers: f.http_headers || info.http_headers || {},
+            cookies: f.cookies || info.cookies || '',
+            original_url: url
+          }));
+      } else {
+        // Default extraction for other platforms (YouTube, Instagram, X, Vimeo, etc.)
+        formats = info.formats
+          .filter(f => f.url && (f.protocol === 'https' || f.protocol === 'http'))
+          // Filter out video-only formats that don't have audio (requires FFmpeg to merge, which proxy can't do natively)
+          // Exception: If it's explicitly just an audio format, that's fine.
+          .filter(f => !(f.vcodec !== 'none' && f.acodec === 'none'))
+          .map(f => {
+            let label = 'Video';
+            let quality = f.resolution || f.format_note || 'unknown';
+            
+            if (f.vcodec === 'none' && f.acodec !== 'none') {
+              label = 'Audio Only';
+              quality = 'MP3/M4A';
+            } else if (f.height) {
+              if (f.height >= 1080) { label = 'Full HD (1080p)'; quality = '1080p'; }
+              else if (f.height >= 720) { label = 'High Definition (HD)'; quality = '720p'; }
+              else if (f.height >= 480) { label = 'Standard Definition (SD)'; quality = '480p'; }
+              else { label = `Low Quality (${f.height}p)`; quality = `${f.height}p`; }
+            }
+
+            return {
+              format: label,
+              format_id: f.format_id || '',
+              quality: quality,
+              ext: f.ext || 'mp4',
+              url: f.url,
+              size: f.filesize || f.filesize_approx || null,
+              http_headers: f.http_headers || info.http_headers || {},
+              cookies: f.cookies || info.cookies || '',
+              original_url: url
+            };
+          });
+
+        // Deduplicate formats based on label/quality to keep it clean
+        const uniqueFormats = [];
+        const seenQualities = new Set();
+        for (const f of formats) {
+          if (!seenQualities.has(f.quality)) {
+            seenQualities.add(f.quality);
+            uniqueFormats.push(f);
+          }
+        }
+        // Sort formats: higher resolutions first, then Audio
+        uniqueFormats.sort((a, b) => {
+          if (a.format === 'Audio Only') return 1;
+          if (b.format === 'Audio Only') return -1;
+          const hA = parseInt(a.quality) || 0;
+          const hB = parseInt(b.quality) || 0;
+          return hB - hA;
+        });
+        formats = uniqueFormats;
+      }
+
+      return NextResponse.json({
+        title: info.title || 'Video Download',
+        thumbnail: info.thumbnail || info.thumbnails?.[0]?.url || '',
+        duration: formatDuration(info.duration),
+        formats: formats.slice(0, 12), // Get up to 12 formats
+      });
+    } catch (execErr) {
+      console.warn('yt-dlp execution failed or not installed. Falling back to mock data for development.', execErr.message);
+
+      // 2. Fallback to mock data for development if yt-dlp fails
+      if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+        // Simple logic to parse and mock based on input URL to make it feel "real"
+        let title = 'Demo Video';
+        let thumbnail = 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=600&auto=format&fit=crop&q=60';
+        let duration = '04:12';
+        let formats = [
+          { format: '1080p HD', quality: '1920x1080', ext: 'mp4', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+          { format: '720p HD', quality: '1280x720', ext: 'mp4', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+          { format: '360p SD', quality: '640x360', ext: 'mp4', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+          { format: 'Audio MP3', quality: '128kbps', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
+        ];
+
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          title = 'Learn React in 10 Minutes - YouTube Tutorial';
+          thumbnail = 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&auto=format&fit=crop&q=60';
+        } else if (url.includes('tiktok.com')) {
+          title = 'Funny Cat Video compilation - TikTok @viralcats';
+          thumbnail = 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=60';
+          formats = [
+            { format: 'Video Without Watermark', quality: '720x1280', ext: 'mp4', url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+            { format: 'Audio MP3', quality: '128kbps', ext: 'mp3', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
+          ];
+        } else if (url.includes('facebook.com')) {
+          title = 'Amazing Traveling Destination - Facebook Watch';
+          thumbnail = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&auto=format&fit=crop&q=60';
+        } else if (url.includes('vimeo.com')) {
+          title = 'Cinematic Short Film 2026 - Vimeo Staff Pick';
+          thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&auto=format&fit=crop&q=60';
+        }
+
+        return NextResponse.json({
+          title,
+          thumbnail,
+          duration,
+          formats,
+          _isMock: true,
+        });
+      }
+
+      // If production and failed, return error
+      return NextResponse.json({ 
+        error: 'Failed to extract video information from the URL. Please verify the URL and try again later.' 
+      }, { status: 500 });
+    }
+  } catch (err) {
+    console.error('Fatal API download error:', err);
+    return NextResponse.json({ error: 'Server error processing request' }, { status: 500 });
+  }
+}

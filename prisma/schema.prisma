@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String   @default("Admin")
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+model Post {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  content         String
+  excerpt         String   @default("")
+  featuredImage   String   @default("")
+  status          String   @default("draft") // draft, published, trash
+  seoTitle        String   @default("")
+  seoDescription  String   @default("")
+  focusKeyword    String   @default("")
+  seoScore        Int      @default(0)
+  readingTime     Int      @default(0)
+  author          User     @relation(fields: [authorId], references: [id])
+  authorId        String
+  categories      PostCategory[]
+  tags            PostTag[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  views           Int      @default(0)
+}
+
+model Category {
+  id               String          @id @default(cuid())
+  name             String          @unique
+  slug             String          @unique
+  description      String          @default("")
+  posts            PostCategory[]
+  autoBlogTopics   AutoBlogTopic[]
+  createdAt        DateTime        @default(now())
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  posts     PostTag[]
+  createdAt DateTime @default(now())
+}
+
+model PostCategory {
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId     String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@id([postId, categoryId])
+}
+
+model PostTag {
+  post    Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId  String
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId   String
+
+  @@id([postId, tagId])
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimetype  String
+  size      Int
+  alt       String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  key   String @id
+  value String
+}
+
+model SiteStat {
+  id         String   @id @default("global")
+  totalViews Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+model ToolStat {
+  toolId     String   @id
+  name       String
+  usageCount Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+model ToolHistory {
+  id        String   @id @default(cuid())
+  toolId    String
+  action    String
+  metadata  String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model AutoBlogTopic {
+  id         String   @id @default(cuid())
+  title      String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+  status     String   @default("pending") // pending, generating, completed, failed
+  progress   Int      @default(0)
+  message    String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
