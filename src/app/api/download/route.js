@@ -383,7 +383,6 @@ export async function POST(request) {
           return hB - hA;
         });
         formats = uniqueFormats;
-      }
 
       return NextResponse.json({
         title: info.title || 'Video Download',
