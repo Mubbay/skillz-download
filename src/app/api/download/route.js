@@ -75,6 +75,93 @@ export async function POST(request) {
         }
       }
 
+      // Helper to extract YouTube ID
+      const extractYoutubeId = (url) => {
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+        return match ? match[1] : null;
+      };
+
+      const ytId = extractYoutubeId(url);
+
+      if (ytId) {
+        console.log(`Processing YouTube video ID: ${ytId}`);
+        let ytData = null;
+        let apiSource = '';
+        
+        // API 1: YouTube Media Downloader (Primary)
+        try {
+          const res1 = await fetch(\`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=\${ytId}\`, {
+            headers: {
+              'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com',
+              'x-rapidapi-key': '64a87d8a5bmsh00d6c0690992bb8p134491jsnc2521fa8bbe6'
+            }
+          });
+          const data1 = await res1.json();
+          if (data1.status === true || data1.errorId === "Success" || (data1.videos && data1.videos.items)) {
+            ytData = data1;
+            apiSource = 'youtube-media-downloader';
+          }
+        } catch (e) {
+          console.warn('API 1 failed:', e);
+        }
+
+        // API 2: YouTube Video FAST Downloader 24/7 (Fallback)
+        if (!ytData) {
+          try {
+            // Note: The user provided /download_audio, but typically /get_video_details exists
+            const res2 = await fetch(\`https://youtube-video-fast-downloader-24-7.p.rapidapi.com/get_video_details?videoId=\${ytId}\`, {
+              headers: {
+                'x-rapidapi-host': 'youtube-video-fast-downloader-24-7.p.rapidapi.com',
+                'x-rapidapi-key': '64a87d8a5bmsh00d6c0690992bb8p134491jsnc2521fa8bbe6'
+              }
+            });
+            const data2 = await res2.json();
+            if (data2 && !data2.message) {
+              ytData = data2;
+              apiSource = 'youtube-fast-downloader';
+            }
+          } catch (e) {
+            console.warn('API 2 failed:', e);
+          }
+        }
+
+        if (ytData && apiSource === 'youtube-media-downloader') {
+          const title = ytData.title || 'YouTube Video';
+          const thumbnail = ytData.thumbnails?.[0]?.url || \`https://i.ytimg.com/vi/\${ytId}/hqdefault.jpg\`;
+          
+          let formats = [];
+          if (ytData.videos && ytData.videos.items) {
+            formats = ytData.videos.items.map(f => ({
+              format: f.hasAudio ? \`\${f.quality} (Video + Audio)\` : \`\${f.quality} (Video Only)\`,
+              quality: f.quality,
+              ext: f.extension || 'mp4',
+              url: f.url,
+              size: f.size || null,
+              original_url: url
+            }));
+          }
+          if (ytData.audios && ytData.audios.items) {
+            ytData.audios.items.forEach(f => {
+              formats.push({
+                format: 'Audio Only',
+                quality: 'MP3/M4A',
+                ext: f.extension || 'mp3',
+                url: f.url,
+                size: f.size || null,
+                original_url: url
+              });
+            });
+          }
+
+          return NextResponse.json({
+            title,
+            thumbnail,
+            duration: '', 
+            formats: formats.slice(0, 15)
+          });
+        }
+      }
+
       // 2. Try extracting info using yt-dlp for other platforms
       // Escaping URL for shell execution
       const escapedUrl = url.replace(/(["'$`])/g, '\\$1');

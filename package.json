@@ -14,10 +14,12 @@
     "daemon": "node scripts/autoblogger.mjs daemon"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "@google/genai": "^2.9.0",
     "@prisma/client": "^6.9.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^12.11.1",
+    "btch-downloader": "^6.0.32",
     "jose": "^6.0.0",
     "lucide-react": "^0.500.0",
     "next": "^15.3.0",
