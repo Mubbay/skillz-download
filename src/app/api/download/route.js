@@ -82,6 +82,47 @@ export async function POST(request) {
         return match ? match[1] : null;
       };
 
+      const simplifyFormats = (formats) => {
+        const simplified = [];
+        const seenCategories = new Set();
+      
+        // Separate Audio and Video
+        const audios = formats.filter(f => f.format.toLowerCase().includes('audio only') || f.quality.toLowerCase().includes('mp3') || f.quality.toLowerCase().includes('audio') || f.quality.toLowerCase().includes('m4a'));
+        const videos = formats.filter(f => !audios.includes(f) && (parseInt(f.quality) || parseInt(f.format)));
+      
+        // Sort videos by resolution descending
+        videos.sort((a, b) => {
+          const resA = parseInt(a.quality) || parseInt(a.format) || 0;
+          const resB = parseInt(b.quality) || parseInt(b.format) || 0;
+          return resB - resA;
+        });
+      
+        for (const v of videos) {
+          const res = parseInt(v.quality) || parseInt(v.format) || 0;
+          let category = '';
+          if (res >= 2160) category = '4K Ultra HD';
+          else if (res >= 1440) category = '2K Quad HD';
+          else if (res >= 1080) category = 'HD (1080p)';
+          else if (res >= 720) category = 'SD (720p)';
+          else category = 'Low Quality';
+      
+          if (!seenCategories.has(category)) {
+            seenCategories.add(category);
+            v.format = category;
+            simplified.push(v);
+          }
+        }
+      
+        // Pick the best audio
+        if (audios.length > 0) {
+          const audio = audios[0];
+          audio.format = 'Audio File';
+          simplified.push(audio);
+        }
+      
+        return simplified.length > 0 ? simplified : formats.slice(0, 5); // Fallback to original if logic fails
+      };
+
       const ytId = extractYoutubeId(url);
 
       if (ytId) {
@@ -158,7 +199,7 @@ export async function POST(request) {
             title,
             thumbnail,
             duration: '', 
-            formats: formats.slice(0, 15)
+            formats: simplifyFormats(formats)
           });
         }
         
@@ -207,7 +248,7 @@ export async function POST(request) {
               title,
               thumbnail,
               duration,
-              formats: ytdlFormats.slice(0, 15)
+              formats: simplifyFormats(ytdlFormats)
             });
           } catch (ytdlErr) {
             console.warn('ytdl-core fallback also failed:', ytdlErr.message);
@@ -309,7 +350,7 @@ export async function POST(request) {
         title: info.title || 'Video Download',
         thumbnail: info.thumbnail || info.thumbnails?.[0]?.url || '',
         duration: formatDuration(info.duration),
-        formats: formats.slice(0, 12), // Get up to 12 formats
+        formats: simplifyFormats(formats),
       });
     } catch (execErr) {
       console.warn('yt-dlp execution failed or not installed. Falling back to mock data for development.', execErr.message);
