@@ -4,10 +4,16 @@ import prisma from '@/lib/prisma';
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.name.ng';
 
-  const posts = await prisma.post.findMany({
-    where: { status: 'published' },
-    select: { slug: true, updatedAt: true },
-  });
+  let posts = [];
+  try {
+    posts = await prisma.post.findMany({
+      where: { status: 'published' },
+      select: { slug: true, updatedAt: true },
+    });
+  } catch (error) {
+    console.warn('Database unreachable during build. Using empty posts for sitemap.');
+  }
+
 
   let urls = posts.map(post => `
   <url>

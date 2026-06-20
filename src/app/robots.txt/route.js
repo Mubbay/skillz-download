@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
-  const setting = await prisma.siteSetting.findUnique({
-    where: { key: 'robotsTxtContent' }
-  });
+  let setting = null;
+  try {
+    setting = await prisma.siteSetting.findUnique({
+      where: { key: 'robotsTxtContent' }
+    });
+  } catch (error) {
+    console.warn('Database unreachable during build. Using default robots.txt.');
+  }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.name.ng';
   

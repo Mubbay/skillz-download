@@ -4,14 +4,19 @@ import prisma from '@/lib/prisma';
 export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.name.ng';
 
-  const categories = await prisma.category.findMany({
-    select: { slug: true, createdAt: true },
-  });
+  let categories = [];
+  try {
+    categories = await prisma.category.findMany({
+      select: { slug: true, updatedAt: true },
+    });
+  } catch (error) {
+    console.warn('Database unreachable during build. Using empty categories for sitemap.');
+  }
 
   let urls = categories.map(cat => `
   <url>
     <loc>${baseUrl}/blog/category/${cat.slug}</loc>
-    <lastmod>${cat.createdAt.toISOString()}</lastmod>
+    <lastmod>${cat.updatedAt.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>`).join('');
