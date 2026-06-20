@@ -74,12 +74,13 @@ const styles = {
     borderRadius: 'var(--radius-xl)',
     border: '1px solid var(--gray-100)',
     boxShadow: 'var(--shadow-sm)',
-    overflow: 'hidden',
+    overflowX: 'auto',
     marginBottom: '24px',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
+    minWidth: '800px',
   },
   th: {
     background: 'var(--gray-50)',

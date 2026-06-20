@@ -315,6 +315,13 @@
   gap: 32px;
 }
 
+.categories-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  align-items: start;
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -345,7 +352,7 @@
   .admin-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .admin-split-grid {
+  .admin-split-grid, .categories-split-grid {
     grid-template-columns: 1fr; /* Stack vertically */
   }
 }

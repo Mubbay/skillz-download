@@ -11,10 +11,7 @@ import {
 
 const styles = {
   container: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 2fr',
-    gap: '32px',
-    alignItems: 'start',
+    /* Styles handled by .categories-split-grid in admin.css */
   },
   title: {
     fontFamily: 'var(--font-heading)',
@@ -53,15 +50,12 @@ const styles = {
     color: 'var(--gray-700)',
   },
   tableWrapper: {
-    background: 'white',
-    borderRadius: 'var(--radius-xl)',
-    border: '1px solid var(--gray-100)',
-    boxShadow: 'var(--shadow-sm)',
-    overflow: 'hidden',
+    /* Styles handled by .table-responsive */
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
+    minWidth: '600px',
   },
   th: {
     background: 'var(--gray-50)',
@@ -182,7 +176,7 @@ export default function AdminCategoriesPage() {
     <div>
       <h1 style={styles.title}>Categories</h1>
 
-      <div style={styles.container}>
+      <div className="categories-split-grid">
         {/* Left: Add New Category Form */}
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>
@@ -230,7 +224,7 @@ export default function AdminCategoriesPage() {
 
         {/* Right: Table showing categories */}
         <div>
-          <div style={styles.tableWrapper}>
+          <div className="table-responsive">
             {loading ? (
               <div style={styles.loadingContainer}>
                 <Loader2 className="spinner" size={24} style={{ color: 'var(--primary-600)' }} />
