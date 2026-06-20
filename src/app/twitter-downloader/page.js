@@ -24,7 +24,7 @@ export default function TwitterDownloaderPage() {
         }}>
           <div className="animate-fade-in-up">
             <span className="hero-badge" style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', borderColor: 'var(--gray-800)', color: 'var(--primary-500)' }}>
-              <img src="/img/twitter-svgrepo-com.svg" alt="X Logo" width="16" height="16" style={{ filter: 'brightness(0) invert(1)' }} />
+              <img src="/img/x-logo.svg" alt="X Logo" width="16" height="16" style={{ filter: 'brightness(0) invert(1)' }} />
               Free X/Twitter Downloader
             </span>
           </div>
