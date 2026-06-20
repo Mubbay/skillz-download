@@ -161,6 +161,12 @@ export default async function BlogPostPage({ params }) {
           margin-bottom: 1.5em;
         }
 
+        .post-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+        }
+
         .post-content h2, .post-content h3 {
           color: #0f172a;
           margin-top: 2em;
@@ -197,6 +203,20 @@ export default async function BlogPostPage({ params }) {
           grid-template-columns: repeat(3, 1fr);
           gap: 20px;
           margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+          .comment-form-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .post-title {
+            font-size: 2rem;
+          }
+          
+          .post-content {
+            font-size: 1.05rem;
+          }
         }
 
         .form-input, .form-textarea {

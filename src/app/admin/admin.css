@@ -374,4 +374,62 @@
   .admin-stats-grid {
     grid-template-columns: 1fr; /* Single column stats */
   }
+  
+  /* Mobile Table styles */
+  .table-responsive table, 
+  .table-responsive thead, 
+  .table-responsive tbody, 
+  .table-responsive th, 
+  .table-responsive td, 
+  .table-responsive tr { 
+    display: block; 
+  }
+  
+  .table-responsive thead tr { 
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  
+  .table-responsive tr { 
+    border-bottom: 1px solid var(--gray-200); 
+    padding: 16px;
+    margin-bottom: 12px;
+    background: white;
+    border-radius: var(--radius-md);
+  }
+  
+  .table-responsive td { 
+    border: none !important;
+    position: relative;
+    padding: 8px 0 !important;
+    padding-left: 40% !important; 
+    min-height: 40px;
+  }
+  
+  .table-responsive td:before { 
+    position: absolute;
+    top: 8px;
+    left: 0;
+    width: 35%; 
+    padding-right: 10px; 
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--gray-500);
+    content: attr(data-label);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+  
+  .table-responsive td:last-child {
+    text-align: left !important;
+    padding-left: 0 !important;
+    padding-top: 16px !important;
+    margin-top: 8px;
+    border-top: 1px solid var(--gray-100) !important;
+  }
+  
+  .table-responsive td:last-child:before {
+    display: none;
+  }
 }

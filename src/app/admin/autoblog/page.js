@@ -193,13 +193,13 @@ export default function AutoBlogPage() {
           <tbody>
             {topics.map(topic => (
               <tr key={topic.id} style={{ borderBottom: '1px solid var(--gray-100)' }}>
-                <td style={{ padding: '16px' }}>
+                <td data-label="Topic" style={{ padding: '16px' }}>
                   <div style={{ fontWeight: 600, color: 'var(--gray-800)' }}>{topic.title}</div>
                   {topic.status === 'generating' && (
                     <div style={{ marginTop: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--gray-500)', marginBottom: '4px' }}>
                         <span>{topic.message || 'Generating...'}</span>
-                        <span>{topic.progress || 0}%</span>
+                        <span>{Math.round(topic.progress || 0)}%</span>
                       </div>
                       <div style={{ width: '100%', height: '6px', background: 'var(--gray-200)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ width: `${topic.progress || 0}%`, height: '100%', background: 'var(--primary-500)', transition: 'width 0.5s ease' }}></div>
@@ -212,10 +212,10 @@ export default function AutoBlogPage() {
                     </div>
                   )}
                 </td>
-                <td style={{ padding: '16px' }}>
+                <td data-label="Category" style={{ padding: '16px' }}>
                   <span className="badge" style={{ background: 'var(--primary-50)', color: 'var(--primary-700)' }}>{topic.category.name}</span>
                 </td>
-                <td style={{ padding: '16px' }}>
+                <td data-label="Status" style={{ padding: '16px' }}>
                   {topic.status === 'pending' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--gray-500)', fontSize: '0.85rem', fontWeight: 600 }}><Clock size={14} /> Pending</span>}
                   {topic.status === 'completed' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--success-600)', fontSize: '0.85rem', fontWeight: 600 }}><CheckCircle size={14} /> Completed</span>}
                   {topic.status === 'generating' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--primary-500)', fontSize: '0.85rem', fontWeight: 600 }}><Loader2 className="spinner" size={14} /> Generating</span>}
