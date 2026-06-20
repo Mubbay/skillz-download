@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import util from 'util';
+import ytdl from '@distube/ytdl-core';
 
 const execPromise = util.promisify(exec);
 
@@ -159,6 +160,58 @@ export async function POST(request) {
             duration: '', 
             formats: formats.slice(0, 15)
           });
+        }
+        
+        // API 3: Fallback to ytdl-core natively if RapidAPIs failed (e.g. quota limit reached)
+        if (!ytData) {
+          try {
+            console.log('RapidAPIs failed, falling back to ytdl-core...');
+            const info = await ytdl.getInfo(url);
+            
+            const title = info.videoDetails.title || 'YouTube Video';
+            const thumbnail = info.videoDetails.thumbnails?.[0]?.url || `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+            const durationSecs = parseInt(info.videoDetails.lengthSeconds || '0');
+            
+            const formatDuration = (secs) => {
+              if (!secs) return '';
+              const h = Math.floor(secs / 3600);
+              const m = Math.floor((secs % 3600) / 60);
+              const s = secs % 60;
+              return h > 0 
+                ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+                : `${m}:${s.toString().padStart(2, '0')}`;
+            };
+            
+            const duration = formatDuration(durationSecs);
+            
+            let ytdlFormats = info.formats
+              .filter(f => f.url && (f.protocol === 'https' || f.protocol === 'http'))
+              .filter(f => !(f.hasVideo === false && f.hasAudio === false)) // ignore weird formats
+              .map(f => {
+                let label = 'Video';
+                if (f.hasAudio && f.hasVideo) label = 'Video + Audio';
+                else if (f.hasVideo) label = 'Video Only';
+                else if (f.hasAudio) label = 'Audio Only';
+                
+                return {
+                  format: `${f.qualityLabel || ''} (${label})`.trim(),
+                  quality: f.qualityLabel || 'audio',
+                  ext: f.container || 'mp4',
+                  url: f.url,
+                  size: f.contentLength || null,
+                  original_url: url
+                };
+              });
+              
+            return NextResponse.json({
+              title,
+              thumbnail,
+              duration,
+              formats: ytdlFormats.slice(0, 15)
+            });
+          } catch (ytdlErr) {
+            console.warn('ytdl-core fallback also failed:', ytdlErr.message);
+          }
         }
       }
 
