@@ -192,12 +192,7 @@ export default function DownloadForm({ platformName = 'Video', placeholder = 'Pa
             <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <p style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--gray-600)' }}>Available formats:</p>
               {result.formats.map((fmt, i) => {
-                // Encode the URL for the proxy
-                const headersStr = fmt.http_headers && Object.keys(fmt.http_headers).length > 0 ? btoa(JSON.stringify(fmt.http_headers)) : '';
-                const cookiesStr = fmt.cookies ? btoa(fmt.cookies) : '';
-                const origUrl = fmt.original_url ? encodeURIComponent(fmt.original_url) : '';
-                const formatId = fmt.format_id ? encodeURIComponent(fmt.format_id) : '';
-                const proxyUrl = `/api/proxy?url=${encodeURIComponent(fmt.url)}&title=${encodeURIComponent(result.title)}&ext=${fmt.ext || 'mp4'}&h=${headersStr}&c=${cookiesStr}&orig=${origUrl}&fid=${formatId}`;
+                const proxyUrl = `/api/proxy?url=${encodeURIComponent(fmt.url)}&title=${encodeURIComponent(result.title)}&ext=${fmt.ext || 'mp4'}`;
                 
                 return (
                   <a

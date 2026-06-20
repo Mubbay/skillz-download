@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { spawn } from 'child_process';
 
+export const runtime = 'edge';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const videoUrl = searchParams.get('url');
@@ -53,36 +53,7 @@ export async function GET(request) {
 
     if (!response.ok) {
       console.error('Fetch failed! Status:', response.status, response.statusText);
-      
-      if (origUrl) {
-        console.log('Falling back to yt-dlp stream for:', origUrl);
-        const ytArgs = ['-m', 'yt_dlp', origUrl, '-o', '-'];
-        if (formatId) {
-          ytArgs.push('-f', formatId);
-        }
-        
-        const child = spawn('python', ytArgs);
-        
-        const stream = new ReadableStream({
-          start(controller) {
-            child.stdout.on('data', (chunk) => controller.enqueue(chunk));
-            child.stdout.on('end', () => controller.close());
-            child.stdout.on('error', (err) => controller.error(err));
-          },
-          cancel() {
-            child.kill();
-          }
-        });
-
-        const fallbackHeaders = new Headers();
-        const safeTitle = title.replace(/[^a-zA-Z0-9-_\s]/g, '').trim().replace(/\s+/g, '_');
-        fallbackHeaders.set('Content-Disposition', `attachment; filename="SkillzDownload_${safeTitle}.${ext}"`);
-        fallbackHeaders.set('Content-Type', 'application/octet-stream');
-        
-        return new NextResponse(stream, { status: 200, headers: fallbackHeaders });
-      }
-
-      // If no origUrl, fallback to redirecting the user directly to the video URL.
+      // Fallback to redirecting the user directly to the video URL.
       return NextResponse.redirect(videoUrl);
     }
 
