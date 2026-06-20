@@ -17,11 +17,9 @@ import {
   Eye,
   Plus
 } from 'lucide-react';
+import './admin.css';
 
 const styles = {
-  container: {
-    animation: 'fadeInUp var(--transition-normal)',
-  },
   welcomeCard: {
     background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
     borderRadius: 'var(--radius-2xl)',
@@ -41,12 +39,6 @@ const styles = {
     borderRadius: '50%',
     background: 'rgba(255,255,255,0.08)',
     pointerEvents: 'none',
-  },
-  gridStats: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: '24px',
-    marginBottom: '32px',
   },
   statCard: {
     padding: '24px',
@@ -69,11 +61,6 @@ const styles = {
     justifyContent: 'center',
     color: 'white',
   },
-  gridContent: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr',
-    gap: '32px',
-  },
   sectionTitle: {
     fontFamily: 'var(--font-heading)',
     fontSize: '1.25rem',
@@ -83,12 +70,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-  },
-  quickActions: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
-    marginBottom: '32px',
   },
   actionCard: {
     padding: '20px',
@@ -101,17 +82,11 @@ const styles = {
     gap: '12px',
     transition: 'all 200ms ease',
   },
-  tableWrapper: {
-    background: 'white',
-    borderRadius: 'var(--radius-xl)',
-    border: '1px solid var(--gray-100)',
-    boxShadow: 'var(--shadow-sm)',
-    overflow: 'hidden',
-  },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
     textAlign: 'left',
+    minWidth: '600px', /* Ensure it doesn't squish too much before scrolling */
   },
   th: {
     background: 'var(--gray-50)',
@@ -123,6 +98,7 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     borderBottom: '1px solid var(--gray-100)',
+    whiteSpace: 'nowrap',
   },
   td: {
     padding: '16px 24px',
@@ -256,7 +232,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div style={styles.container}>
+    <div className="animate-fade-in-up">
       {/* Welcome Card */}
       <div style={styles.welcomeCard}>
         <div style={styles.welcomeOrb} />
@@ -269,7 +245,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div style={styles.gridStats}>
+      <div className="admin-stats-grid">
         {statCardsData.map((card, idx) => (
           <div
             key={idx}
@@ -294,7 +270,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Grid Content */}
-      <div style={styles.gridContent}>
+      <div className="admin-split-grid">
         {/* Left Side: Recent Posts */}
         <div>
           <h2 style={styles.sectionTitle}>
@@ -302,7 +278,7 @@ export default function AdminDashboardPage() {
             Recent Blog Posts
           </h2>
 
-          <div style={styles.tableWrapper}>
+          <div className="table-responsive">
             {stats.recentPosts.length === 0 ? (
               <div style={{ padding: '40px', textAlign: 'center', color: 'var(--gray-400)' }}>
                 <FileText size={48} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
@@ -339,7 +315,7 @@ export default function AdminDashboardPage() {
                       <td style={styles.td}>
                         <span style={styles.seoBadge(post.seoScore)}>{post.seoScore}/100</span>
                       </td>
-                      <td style={{ ...styles.td, color: 'var(--gray-400)', fontSize: '0.8rem' }}>
+                      <td style={{ ...styles.td, color: 'var(--gray-400)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                         {new Date(post.createdAt).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -361,7 +337,7 @@ export default function AdminDashboardPage() {
             Quick Actions
           </h2>
 
-          <div style={styles.quickActions}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
             <Link
               href="/admin/posts/new"
               style={{
@@ -376,7 +352,7 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--gray-800)' }}>New Post</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '2px' }}>Gutenberg-style post editor</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '2px' }}>Gutenberg-style editor</div>
               </div>
             </Link>
 
@@ -415,12 +391,12 @@ export default function AdminDashboardPage() {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, white 55%, transparent 56%), conic-gradient(var(--success-500) 0% ' + stats.averageSeoScore + '%, var(--gray-200) ' + stats.averageSeoScore + '% 100%)',
+              background: 'radial-gradient(circle, white 55%, transparent 56%), conic-gradient(var(--success-500) 0% ' + (stats.averageSeoScore || 0) + '%, var(--gray-200) ' + (stats.averageSeoScore || 0) + '% 100%)',
               boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.05)',
             }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--gray-800)', fontFamily: 'var(--font-heading)' }}>
-                  {stats.averageSeoScore}
+                  {stats.averageSeoScore || 0}
                 </div>
                 <div style={{ fontSize: '0.65rem', color: 'var(--gray-400)', fontWeight: 600, textTransform: 'uppercase' }}>Avg Score</div>
               </div>
