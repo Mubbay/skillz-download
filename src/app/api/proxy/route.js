@@ -86,16 +86,26 @@ export async function GET(request) {
       return NextResponse.redirect(videoUrl);
     }
 
-    const headers = new Headers(response.headers);
+    const safeHeaders = new Headers();
+    const contentType = response.headers.get('content-type');
+    if (contentType) safeHeaders.set('Content-Type', contentType);
+    else safeHeaders.set('Content-Type', 'application/octet-stream');
+    
+    const contentLength = response.headers.get('content-length');
+    if (contentLength) safeHeaders.set('Content-Length', contentLength);
+    
+    const acceptRanges = response.headers.get('accept-ranges');
+    if (acceptRanges) safeHeaders.set('Accept-Ranges', acceptRanges);
+
     // Force download by setting Content-Disposition
     // Remove characters that might cause header parsing issues
-    const safeTitle = title.replace(/[^a-zA-Z0-9-_\s]/g, '').trim().replace(/\s+/g, '_');
-    headers.set('Content-Disposition', `attachment; filename="SkillzDownload_${safeTitle}.${ext}"`);
-    headers.set('Access-Control-Allow-Origin', '*');
+    const safeTitle = title.replace(/[^a-zA-Z0-9-_\s]/g, '').trim().replace(/\s+/g, '_') || 'Video';
+    safeHeaders.set('Content-Disposition', `attachment; filename="SkillzDownload_${safeTitle}.${ext}"`);
+    safeHeaders.set('Access-Control-Allow-Origin', '*');
 
     return new NextResponse(response.body, {
       status: 200,
-      headers
+      headers: safeHeaders
     });
   } catch (error) {
     console.error('Proxy error:', error);
