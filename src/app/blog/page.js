@@ -127,6 +127,12 @@ export default async function BlogPage() {
             text-align: center;
             gap: 20px;
           }
+          .mag-banner-container {
+            padding: 30px 24px !important;
+          }
+          .mag-trending-grid, .mag-popular-grid, .mag-editor-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
 
         @media (max-width: 640px) {
@@ -346,7 +352,7 @@ export default async function BlogPage() {
         {/* --- BANNER AD SECTION --- */}
         <section style={{ padding: '40px 0', background: '#f1f5f9', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
           <div className="mag-container">
-            <div style={{ 
+            <div className="mag-banner-container" style={{ 
               background: 'linear-gradient(to right, #2563eb, #4338ca)', 
               borderRadius: '16px', 
               overflow: 'hidden', 

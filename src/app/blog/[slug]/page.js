@@ -238,11 +238,22 @@ export default async function BlogPostPage({ params }) {
         }
 
         @media (max-width: 768px) {
+          .post-container {
+            padding: 30px 16px 60px;
+          }
           .comment-form-grid {
             grid-template-columns: 1fr;
           }
           .post-title {
             font-size: 2rem;
+            margin-bottom: 16px;
+          }
+          .post-content {
+            font-size: 1.05rem;
+          }
+          .comment-section {
+            margin-top: 50px;
+            padding-top: 40px;
           }
         }
       `}} />
