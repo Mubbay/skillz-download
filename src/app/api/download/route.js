@@ -90,7 +90,7 @@ export async function POST(request) {
         
         // API 1: YouTube Media Downloader (Primary)
         try {
-          const res1 = await fetch(\`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=\${ytId}\`, {
+          const res1 = await fetch(`https://youtube-media-downloader.p.rapidapi.com/v2/video/details?videoId=${ytId}`, {
             headers: {
               'x-rapidapi-host': 'youtube-media-downloader.p.rapidapi.com',
               'x-rapidapi-key': '64a87d8a5bmsh00d6c0690992bb8p134491jsnc2521fa8bbe6'
@@ -109,7 +109,7 @@ export async function POST(request) {
         if (!ytData) {
           try {
             // Note: The user provided /download_audio, but typically /get_video_details exists
-            const res2 = await fetch(\`https://youtube-video-fast-downloader-24-7.p.rapidapi.com/get_video_details?videoId=\${ytId}\`, {
+            const res2 = await fetch(`https://youtube-video-fast-downloader-24-7.p.rapidapi.com/get_video_details?videoId=${ytId}`, {
               headers: {
                 'x-rapidapi-host': 'youtube-video-fast-downloader-24-7.p.rapidapi.com',
                 'x-rapidapi-key': '64a87d8a5bmsh00d6c0690992bb8p134491jsnc2521fa8bbe6'
@@ -127,12 +127,12 @@ export async function POST(request) {
 
         if (ytData && apiSource === 'youtube-media-downloader') {
           const title = ytData.title || 'YouTube Video';
-          const thumbnail = ytData.thumbnails?.[0]?.url || \`https://i.ytimg.com/vi/\${ytId}/hqdefault.jpg\`;
+          const thumbnail = ytData.thumbnails?.[0]?.url || `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
           
           let formats = [];
           if (ytData.videos && ytData.videos.items) {
             formats = ytData.videos.items.map(f => ({
-              format: f.hasAudio ? \`\${f.quality} (Video + Audio)\` : \`\${f.quality} (Video Only)\`,
+              format: f.hasAudio ? `${f.quality} (Video + Audio)` : `${f.quality} (Video Only)`,
               quality: f.quality,
               ext: f.extension || 'mp4',
               url: f.url,
