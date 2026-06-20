@@ -23,7 +23,7 @@ export async function generateMetadata() {
     openGraph: {
       type: 'website',
       locale: 'en_US',
-      url: process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.com',
+      url: process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.name.ng',
       siteName: 'Skillz Download',
       title: 'Skillz Download — Free Online Video Downloader',
       description: 'Download videos from YouTube, TikTok, Facebook, Vimeo and 1000+ sites for free.',

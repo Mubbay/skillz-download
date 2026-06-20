@@ -6,7 +6,7 @@ export async function GET() {
     where: { key: 'robotsTxtContent' }
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skillzdownload.name.ng';
   
   const defaultRobots = `User-agent: *
 Allow: /
