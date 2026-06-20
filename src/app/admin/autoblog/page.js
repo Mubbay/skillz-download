@@ -108,7 +108,7 @@ export default function AutoBlogPage() {
 
   return (
     <div className="card" style={{ padding: '32px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Bot size={28} style={{ color: 'var(--primary-600)' }} />
@@ -180,8 +180,8 @@ export default function AutoBlogPage() {
         </form>
       )}
 
-      <div className="table-wrapper" style={{ border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <div className="table-responsive" style={{ border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-lg)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
           <thead>
             <tr style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)' }}>
               <th style={{ padding: '16px', fontSize: '0.85rem', color: 'var(--gray-500)', textTransform: 'uppercase' }}>Topic</th>
