@@ -9,6 +9,8 @@ export const metadata = {
   description: 'Read our latest articles, tutorials, and news about video downloading, content creation, and more.',
 };
 
+export const dynamic = 'force-dynamic';
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
 }

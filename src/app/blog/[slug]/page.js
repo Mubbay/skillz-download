@@ -7,6 +7,8 @@ import TrackView from '@/components/TrackView';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }) {
   const post = await prisma.post.findUnique({
     where: { slug: params.slug }

@@ -12,6 +12,9 @@ import {
   AlertTriangle, ArrowRight
 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
+
 const platforms = [
   { name: 'YouTube', color: '#FF0000', gradient: 'linear-gradient(135deg, #FF0000, #CC0000)', iconSrc: '/img/youtube-svgrepo-com.svg', href: '/youtube-downloader', desc: 'Download YouTube videos in HD, 4K, MP3' },
   { name: 'TikTok', color: '#00f2ea', gradient: 'linear-gradient(135deg, #00f2ea, #ff0050)', iconSrc: '/img/tiktok-svgrepo-com.svg', href: '/tiktok-downloader', desc: 'Save TikTok videos without watermark' },
