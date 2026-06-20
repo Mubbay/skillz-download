@@ -254,6 +254,39 @@ export async function POST(request) {
             console.warn('ytdl-core fallback also failed:', ytdlErr.message);
           }
         }
+      } else if (url.includes('instagram.com') || url.includes('instagr.am')) {
+        console.log('Processing Instagram video...');
+        try {
+          const btch = require('btch-downloader');
+          const igData = await btch.igdl(url);
+          
+          if (igData && igData.status && igData.result && igData.result.length > 0) {
+            const resultItem = igData.result[0];
+            const formats = [];
+            
+            // Collect all video/image URLs returned
+            igData.result.forEach((item, index) => {
+              if (item.url) {
+                formats.push({
+                  format: `HD Video ${index + 1}`,
+                  quality: '1080p',
+                  ext: 'mp4',
+                  url: item.url,
+                  original_url: url
+                });
+              }
+            });
+            
+            return NextResponse.json({
+              title: 'Instagram Video',
+              thumbnail: resultItem.thumbnail || '',
+              duration: '',
+              formats: simplifyFormats(formats)
+            });
+          }
+        } catch(e) {
+          console.error("Instagram btch-downloader failed:", e.message);
+        }
       } else if (url.includes('facebook.com') || url.includes('fb.watch') || url.includes('fb.video') || url.includes('fb.com')) {
         console.log('Processing Facebook video...');
         let fbData = null;
