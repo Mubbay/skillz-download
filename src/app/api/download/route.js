@@ -254,6 +254,62 @@ export async function POST(request) {
             console.warn('ytdl-core fallback also failed:', ytdlErr.message);
           }
         }
+      } else if (url.includes('facebook.com') || url.includes('fb.watch') || url.includes('fb.video') || url.includes('fb.com')) {
+        console.log('Processing Facebook video...');
+        let fbData = null;
+        const apiKey = process.env.RAPIDAPI_KEY || "64a87d8a5bmsh00d6c0690992bb8p134491jsnc2521fa8bbe6";
+        
+        // Try API 1 (fdown1)
+        try {
+          const res1 = await fetch("https://fdown1.p.rapidapi.com/download", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json", 
+              "x-rapidapi-host": "fdown1.p.rapidapi.com", 
+              "x-rapidapi-key": apiKey 
+            },
+            body: JSON.stringify({ url })
+          });
+          const data = await res1.json();
+          if (data && data.status === "success" && data.data && data.data.download) {
+            fbData = data;
+          }
+        } catch(e) { console.error("FB API 1 failed:", e.message); }
+
+        // Try API 2 (facebook-video-downloader9) as fallback
+        if (!fbData) {
+          try {
+            const res2 = await fetch(`https://facebook-video-downloader9.p.rapidapi.com/api/v1/videos/download?url=${encodeURIComponent(url)}`, {
+              method: "GET",
+              headers: { 
+                "Content-Type": "application/json", 
+                "x-rapidapi-host": "facebook-video-downloader9.p.rapidapi.com", 
+                "x-rapidapi-key": apiKey 
+              }
+            });
+            const data2 = await res2.json();
+            if (data2 && data2.status === "success" && data2.data && data2.data.download) {
+              fbData = data2;
+            }
+          } catch(e) { console.error("FB API 2 failed:", e.message); }
+        }
+
+        if (fbData) {
+          const formats = [];
+          if (fbData.data.download.sd && fbData.data.download.sd.url) {
+            formats.push({ format: 'SD Video', quality: '720p', ext: 'mp4', url: fbData.data.download.sd.url, original_url: url });
+          }
+          if (fbData.data.download.hd && fbData.data.download.hd.url) {
+            formats.push({ format: 'HD Video', quality: '1080p', ext: 'mp4', url: fbData.data.download.hd.url, original_url: url });
+          }
+          
+          return NextResponse.json({
+            title: fbData.data.video.title && fbData.data.video.title !== "Untitled" ? fbData.data.video.title : 'Facebook Video',
+            thumbnail: fbData.data.video.thumbnail_url || '',
+            duration: '',
+            formats: simplifyFormats(formats)
+          });
+        }
       }
 
       // 2. Try extracting info using yt-dlp for other platforms
@@ -275,26 +331,9 @@ export async function POST(request) {
       let formats = [];
 
       // Clean up formats based on platform
-      if (url.includes('facebook.com') || url.includes('fb.watch') || url.includes('fb.video')) {
-        // Facebook splits high-res video and audio. 
-        // Only the 'sd' and 'hd' format_ids are pre-merged with both video and audio.
-        formats = info.formats
-          .filter(f => f.url && (f.protocol === 'https' || f.protocol === 'http'))
-          .filter(f => f.format_id === 'sd' || f.format_id === 'hd')
-          .map(f => ({
-            format: f.format_id === 'hd' ? 'High Definition (HD)' : 'Standard Definition (SD)',
-            format_id: f.format_id || '',
-            quality: f.format_id === 'hd' ? 'HD' : 'SD',
-            ext: 'mp4',
-            url: f.url,
-            size: f.filesize || f.filesize_approx || null,
-            http_headers: f.http_headers || info.http_headers || {},
-            cookies: f.cookies || info.cookies || '',
-            original_url: url
-          }));
-      } else {
-        // Default extraction for other platforms (YouTube, Instagram, X, Vimeo, etc.)
-        formats = info.formats
+      // Clean up formats based on platform
+      // Default extraction for other platforms (Instagram, X, Vimeo, etc.)
+      formats = info.formats
           .filter(f => f.url && (f.protocol === 'https' || f.protocol === 'http'))
           // Filter out video-only formats that don't have audio (requires FFmpeg to merge, which proxy can't do natively)
           // Exception: If it's explicitly just an audio format, that's fine.
